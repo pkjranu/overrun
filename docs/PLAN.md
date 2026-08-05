@@ -88,19 +88,17 @@ proves it's reasoning, not a scripted single-answer lookup.
 
 
 
-\### Path 1 — Happy Path: "Marcus and Whitfield"
+\### Path 1 — Happy Path: "Marcus and Bridgeway"
 
-\- Deal: Whitfield Manufacturing, $180K expansion, 90% probability, closing
-
-&#x20; this week.
+\- Deal: Bridgeway, $180K expansion, 90% probability, closing this week.
 
 \- Need: Senior data-integration consultant, start in \~2 weeks.
 
-\- Signal: Marcus rolls off Project Kestrel 2 days before Whitfield needs
+\- Signal: Marcus rolls off Project Kestrel 2 days before Bridgeway needs
 
 &#x20; him — exact skill match, nobody had connected the two facts because
 
-&#x20; Kestrel's timeline lives in Resourcing, Whitfield's deal lives in Sales.
+&#x20; Kestrel's timeline lives in Resourcing, Bridgeway's deal lives in Sales.
 
 \- Agent output: clean match identified, recommend assigning Marcus,
 
@@ -110,9 +108,9 @@ proves it's reasoning, not a scripted single-answer lookup.
 
 \### Path 2 — Risk Path: "The overloaded save"
 
-\- Deal: Dunmore Logistics, $95K contract renewal, cloud-migration
+\- Deal: Harlow, $95K contract renewal, cloud-migration specialist
 
-&#x20; specialist needed, starting in 5 days.
+&#x20; needed, starting in 5 days.
 
 \- Signal: Only qualified consultant, Aisha, is already at 90% allocation
 
@@ -120,7 +118,7 @@ proves it's reasoning, not a scripted single-answer lookup.
 
 &#x20; pushes her to 130% allocation.
 
-\- Compounding signal: Dunmore's pricing was set assuming a mid-level
+\- Compounding signal: Harlow's pricing was set assuming a mid-level
 
 &#x20; consultant's rate, not Aisha's senior rate — staffing her drops the
 
@@ -142,7 +140,7 @@ proves it's reasoning, not a scripted single-answer lookup.
 
 \### Path 3 — Gap Path: "The honest no"
 
-\- Deal: Castellan Retail, $220K new-logo opportunity, requires a niche
+\- Deal: Corven, $220K new-logo opportunity, requires a niche
 
 &#x20; certified Data Cloud integration architect skill.
 
@@ -178,15 +176,53 @@ reasoning, not a single scripted trick.
 
 
 
-\## 4. Data model
+\## 4. Data model (LOCKED)
 
-\- \[ ] Opportunity / pipeline data (deal, close date, required skills/role)
 
-\- \[ ] Consultant allocation data (current assignments, % allocated, skills)
 
-\- \[ ] Project margin/finance data (rate, cost, target margin, utilization)
+Client names simplified: Bridgeway, Harlow, Corven (no suffixes).
 
-\- \[ ] Unified/joined view — how does CRM Analytics bring these together?
+
+
+| Object | Fields |
+
+|---|---|
+
+| \*\*Opportunity\*\* (standard) | Amount, Probability, CloseDate, Account, `Skill\_Needed\_\_c`, `Start\_Needed\_\_c`, `Target\_Margin\_\_c`, `Assumed\_Level\_\_c` |
+
+| \*\*Consultant\_\_c\*\* (custom) | Name, `Skill\_\_c`, `Level\_\_c`, `Rate\_\_c` |
+
+| \*\*Project\_\_c\*\* (custom) | Name, `End\_Date\_\_c`, `Account\_\_c` (lookup) |
+
+| \*\*Assignment\_\_c\*\* (custom, junction) | `Consultant\_\_c` (lookup), `Project\_\_c` (lookup), `Allocation\_\_c`, `Start\_Date\_\_c`, `End\_Date\_\_c` |
+
+
+
+\- Consultant's TOTAL allocation = sum of `Allocation\_\_c` across their active
+
+&#x20; Assignment\_\_c rows. This is the mechanism behind the risk path (Aisha
+
+&#x20; hitting 130%).
+
+\- Happy path (Marcus/Bridgeway) = query for consultants whose
+
+&#x20; Assignment\_\_c.End\_Date\_\_c falls before an Opportunity's Start\_Needed\_\_c,
+
+&#x20; matching Skill\_\_c.
+
+\- Gap path (Corven) = query returns zero Consultant\_\_c matches for the
+
+&#x20; required skill — a real empty result, not scripted.
+
+\- Decision: start with plain custom objects (fastest for a 4-week build).
+
+&#x20; Sync to Data Cloud/Data 360 later if time allows, for the CRM Analytics
+
+&#x20; grounding layer — not required to get the core demo working.
+
+\- CRM Analytics: one recipe joins Opportunity + Consultant\_\_c +
+
+&#x20; Assignment\_\_c into a single unified dataset the agent reasons over.
 
 
 
@@ -246,13 +282,17 @@ alert — referenced, not built as a parallel system. ]
 
 \- Compound-signal reveal (the wow moment): agent returns all three deals
 
-&#x20; in one response — Whitfield (clean match, Marcus), Dunmore (risk
+&#x20; in one response — Bridgeway (clean match, Marcus), Harlow (risk
 
-&#x20; flagged: overallocation + margin erosion, together), Castellan (honest
+&#x20; flagged: overallocation + margin erosion, together), Corven (honest
 
 &#x20; gap: no internal fit, 5-week hiring lead time, concrete alternative).
 
-\- Human approval step: for the Dunmore risk-path recommendation, a human
+&#x20; Client names: Bridgeway, Harlow, Corven — no suffixes, simple to
+
+&#x20; say on camera.
+
+\- Human approval step: for the Harlow risk-path recommendation, a human
 
 &#x20; (Priya) approves the phased-start action before anything executes —
 

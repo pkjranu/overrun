@@ -42,15 +42,139 @@ Reference stats to cite in the demo (SPI Research, via prior research):
 
 
 
-\## 3. The compound-signal scenario (the demo's hero moment — define precisely)
+\## 3. The compound-signal scenario (the demo's hero moment — LOCKED)
 
-\[ TODO: write the exact scenario — e.g., "Can we staff the Acme deal closing
 
-Friday?" → agent finds the best-fit consultant is already at 95% allocation
 
-across two other projects, would cross 130% if assigned, and the resulting
+\*\*Company:\*\* Arihant Consulting
 
-margin would drop below the firm's threshold. ]
+\*\*Persona:\*\* Priya, Delivery Manager
+
+
+
+\*\*The trigger query (demo opener):\*\*
+
+"Give me a staffing risk check across active deals this week."
+
+
+
+\*\*The agent's decision hierarchy (applied to every deal, in order):\*\*
+
+1\. Is there a consultant rolling off another project whose timeline and
+
+&#x20;  skills line up? → Happy path.
+
+2\. If not, is there anyone on the bench (already unassigned) with the
+
+&#x20;  right skills? → Still a happy path, weaker signal.
+
+3\. If not, would assigning the best available match push them past a safe
+
+&#x20;  allocation ceiling, AND does that also threaten the deal's margin? →
+
+&#x20;  Risk path.
+
+4\. If nobody internally fits at all, what's the realistic external
+
+&#x20;  recruiting lead time, and does it fit the deal's timeline? → Gap path.
+
+
+
+The demo shows the agent running this hierarchy across three simultaneous
+
+deals in ONE response — not three separate isolated Q\&As. This is what
+
+proves it's reasoning, not a scripted single-answer lookup.
+
+
+
+\### Path 1 — Happy Path: "Marcus and Whitfield"
+
+\- Deal: Whitfield Manufacturing, $180K expansion, 90% probability, closing
+
+&#x20; this week.
+
+\- Need: Senior data-integration consultant, start in \~2 weeks.
+
+\- Signal: Marcus rolls off Project Kestrel 2 days before Whitfield needs
+
+&#x20; him — exact skill match, nobody had connected the two facts because
+
+&#x20; Kestrel's timeline lives in Resourcing, Whitfield's deal lives in Sales.
+
+\- Agent output: clean match identified, recommend assigning Marcus,
+
+&#x20; timeline confirmed to work.
+
+
+
+\### Path 2 — Risk Path: "The overloaded save"
+
+\- Deal: Dunmore Logistics, $95K contract renewal, cloud-migration
+
+&#x20; specialist needed, starting in 5 days.
+
+\- Signal: Only qualified consultant, Aisha, is already at 90% allocation
+
+&#x20; across two other projects. No one is rolling off in time. Assigning her
+
+&#x20; pushes her to 130% allocation.
+
+\- Compounding signal: Dunmore's pricing was set assuming a mid-level
+
+&#x20; consultant's rate, not Aisha's senior rate — staffing her drops the
+
+&#x20; project's margin from the 30% target to roughly 19%.
+
+\- Agent output: flags BOTH the overallocation risk and the margin risk
+
+&#x20; together (not separately), recommends a specific action — a two-week
+
+&#x20; phased start so Aisha finishes current work first, OR renegotiating
+
+&#x20; scope/pricing with the client. Requires human approval before any
+
+&#x20; staffing change is actually made (see CLAUDE.md — no consequential
+
+&#x20; action without human sign-off).
+
+
+
+\### Path 3 — Gap Path: "The honest no"
+
+\- Deal: Castellan Retail, $220K new-logo opportunity, requires a niche
+
+&#x20; certified Data Cloud integration architect skill.
+
+\- Signal: Agent checks rolling-off staff (none match), checks the bench
+
+&#x20; (none match) — genuinely no internal fit.
+
+\- Agent output: honest, specific answer — "No internal match. Typical
+
+&#x20; hiring lead time for this skill is approximately 5 weeks, which is
+
+&#x20; after the deal's required start date. Recommend either delaying kickoff
+
+&#x20; by 3 weeks or engaging a subcontractor for this engagement." This is
+
+&#x20; NOT a refusal — it's a fully-reasoned answer that happens to conclude
+
+&#x20; "we don't have it," with a concrete next step attached.
+
+
+
+\### Why all three matter together
+
+Path 3 especially demonstrates multi-step reasoning (checked everything,
+
+here's exactly what's missing) rather than a simple "I don't know." Showing
+
+all three in one query response — three different deals, three different
+
+correct outcomes — is the strongest possible proof this is genuine agentic
+
+reasoning, not a single scripted trick.
 
 
 
@@ -110,17 +234,41 @@ alert — referenced, not built as a parallel system. ]
 
 \## 8. Demo script outline
 
-\- Hook:
+\- Hook: Priya, Monday morning, one question — "Give me a staffing risk
 
-\- Business pain:
+&#x20; check across active deals this week."
 
-\- Compound-signal reveal (the wow moment):
+\- Business pain: today this requires manually cross-referencing Sales
 
-\- Human approval step:
+&#x20; pipeline, Resourcing schedules, and Finance margin data across separate
 
-\- Impact/outcome (projected, credible, tied to the SPI stats above):
+&#x20; systems — nobody does this proactively, so it's found too late.
 
-\- Close:
+\- Compound-signal reveal (the wow moment): agent returns all three deals
+
+&#x20; in one response — Whitfield (clean match, Marcus), Dunmore (risk
+
+&#x20; flagged: overallocation + margin erosion, together), Castellan (honest
+
+&#x20; gap: no internal fit, 5-week hiring lead time, concrete alternative).
+
+\- Human approval step: for the Dunmore risk-path recommendation, a human
+
+&#x20; (Priya) approves the phased-start action before anything executes —
+
+&#x20; agent drafts, human decides.
+
+\- Impact/outcome (projected, credible, tied to SPI Research stats):
+
+&#x20; industry median utilization sits at 66.4%; this pattern is designed to
+
+&#x20; catch the exact compounding risk (overallocation + margin erosion)
+
+&#x20; that manual, siloed tracking misses until it's client-visible.
+
+\- Close: callback to the opening question — one query, three deals, three
+
+&#x20; correctly different outcomes, no dashboard shows this today.
 
 
 

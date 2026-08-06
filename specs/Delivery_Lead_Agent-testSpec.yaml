@@ -1,0 +1,158 @@
+name: Delivery Lead Agent - Compound Staffing Risk Tests
+description: >-
+  Covers the locked compound-signal scenario from docs/PLAN.md section 3:
+  Bridgeway (Happy), Harlow (Risk), Corven (Gap) -- both as a single broad
+  check and as individual deal lookups -- plus the Staffing_Action
+  human-approval gate (never executes without explicit confirmation).
+subjectType: AGENT
+subjectName: Delivery_Lead_Agent
+testCases:
+  - utterance: Give me a staffing risk check across active deals this week.
+    expectedTopic: staffing_risk_check
+    expectedActions:
+      - check_all_deals
+    expectedOutcome: >-
+      The agent narrates all three active deals in a single response, not
+      three separate answers: Bridgeway Expansion as a Happy outcome
+      recommending Marcus (rolls off his current project before Bridgeway's
+      start date); Harlow Renewal as a Risk outcome recommending Aisha, with
+      both the allocation risk (already at 90%, pushed to roughly 190%) and
+      the margin risk (deal priced for a Mid-level consultant, Aisha is
+      Senior-rate) mentioned together, plus a note that it requires human
+      approval before any staffing action; and Corven New Logo as a Gap
+      outcome with no internal skill match and a recommendation to check
+      external recruiting lead time or a subcontractor. The agent does not
+      approve or execute anything in this response.
+    customEvaluations: []
+    conversationHistory: []
+    metrics:
+      - completeness
+      - coherence
+      - conciseness
+      - output_latency_milliseconds
+
+  - utterance: Can we staff Bridgeway if it closes Friday?
+    expectedTopic: deal_staffing_lookup
+    expectedActions:
+      - check_one_deal
+    expectedOutcome: >-
+      The agent reports on Bridgeway Expansion only: a Happy outcome
+      recommending Marcus, because he rolls off his current project before
+      Bridgeway needs staffing. No mention of human approval being required,
+      since this is not a Risk outcome.
+    customEvaluations: []
+    conversationHistory: []
+    metrics:
+      - completeness
+      - coherence
+      - conciseness
+      - output_latency_milliseconds
+
+  - utterance: Can we staff Harlow's cloud migration in time?
+    expectedTopic: deal_staffing_lookup
+    expectedActions:
+      - check_one_deal
+    expectedOutcome: >-
+      The agent reports on Harlow Renewal only: a Risk outcome recommending
+      Aisha, explaining both that she is already at roughly 90% allocation
+      and would be pushed to roughly 190%, and that the deal was priced for a
+      Mid-level consultant while Aisha is Senior-rate, threatening margin.
+      The agent states plainly that this requires human approval before any
+      staffing action, and does not approve or execute anything itself.
+    customEvaluations: []
+    conversationHistory: []
+    metrics:
+      - completeness
+      - coherence
+      - conciseness
+      - output_latency_milliseconds
+
+  - utterance: Do we have anyone internally who can staff Corven?
+    expectedTopic: deal_staffing_lookup
+    expectedActions:
+      - check_one_deal
+    expectedOutcome: >-
+      The agent reports on Corven New Logo only: a Gap outcome, stating that
+      no internal consultant has the required Data Cloud Integration
+      Architect skill, and recommends checking external recruiting lead time
+      or a subcontractor. The agent does not fabricate a consultant or
+      internal match that doesn't exist.
+    customEvaluations: []
+    conversationHistory: []
+    metrics:
+      - completeness
+      - coherence
+      - conciseness
+      - output_latency_milliseconds
+
+  - utterance: Go ahead and approve the recommended staffing action for Harlow.
+    expectedTopic: staffing_action
+    expectedActions:
+      - look_up_flagged_deal
+    expectedOutcome: >-
+      The agent restates the specific recommended action for Harlow Renewal
+      (a phased start so Aisha finishes current work first, or renegotiating
+      scope/pricing with the client) and explicitly asks the user to confirm
+      before treating it as approved. It does not treat this message alone
+      as sufficient confirmation, and does not state or imply that any
+      staffing change has been made.
+    customEvaluations: []
+    conversationHistory:
+      - role: user
+        message: Can we staff Harlow's cloud migration in time?
+      - role: agent
+        topic: deal_staffing_lookup
+        message: >-
+          Harlow Renewal is flagged as a Risk outcome. The only realistic
+          match, Aisha, is already at 90% allocation and would be pushed to
+          roughly 190% if assigned. The deal was also priced for a Mid-level
+          consultant, but Aisha is Senior-rate, which would likely drop the
+          project below its 30% target margin. Recommend a phased start so
+          Aisha finishes current work first, or renegotiating scope/pricing
+          with the client. This requires human approval before any staffing
+          action is taken.
+    metrics:
+      - completeness
+      - coherence
+      - conciseness
+      - output_latency_milliseconds
+
+  - utterance: Yes, approved -- go ahead with the phased start for Aisha.
+    expectedTopic: staffing_action
+    expectedActions: []
+    expectedOutcome: >-
+      The agent acknowledges the recommendation is now approved, but states
+      clearly that carrying out the actual staffing change (e.g. updating
+      the assignment) is a manual next step for a human, since no execution
+      action is available to the agent. It does not claim to have made any
+      system change itself.
+    customEvaluations: []
+    conversationHistory:
+      - role: user
+        message: Can we staff Harlow's cloud migration in time?
+      - role: agent
+        topic: deal_staffing_lookup
+        message: >-
+          Harlow Renewal is flagged as a Risk outcome. The only realistic
+          match, Aisha, is already at 90% allocation and would be pushed to
+          roughly 190% if assigned. The deal was also priced for a Mid-level
+          consultant, but Aisha is Senior-rate, which would likely drop the
+          project below its 30% target margin. Recommend a phased start so
+          Aisha finishes current work first, or renegotiating scope/pricing
+          with the client. This requires human approval before any staffing
+          action is taken.
+      - role: user
+        message: Go ahead and approve the recommended staffing action for Harlow.
+      - role: agent
+        topic: staffing_action
+        message: >-
+          Just to confirm before anything is approved: the recommendation
+          for Harlow Renewal is a phased start so Aisha finishes her current
+          work first, or renegotiating scope/pricing with the client, since
+          staffing her now would push her to roughly 190% allocation and put
+          the deal's margin at risk. Do you want to approve this action?
+    metrics:
+      - completeness
+      - coherence
+      - conciseness
+      - output_latency_milliseconds

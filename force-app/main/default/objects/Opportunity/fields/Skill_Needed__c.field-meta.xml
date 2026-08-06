@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Skill_Needed__c</fullName>
+    <label>Skill Needed</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Data Integration</fullName>
+                <default>false</default>
+                <label>Data Integration</label>
+            </value>
+            <value>
+                <fullName>Cloud Migration</fullName>
+                <default>false</default>
+                <label>Cloud Migration</label>
+            </value>
+            <value>
+                <fullName>Data Cloud Integration Architect</fullName>
+                <default>false</default>
+                <label>Data Cloud Integration Architect</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

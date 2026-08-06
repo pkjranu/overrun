@@ -45,37 +45,70 @@ public with sharing class StaffingRiskService {
 
     @InvocableMethod(label='Get Staffing Risk Report' description='Runs the staffing decision hierarchy across near-term opportunities that need staffing.')
     public static List<Result> getStaffingRiskReport(List<Request> requests) {
-        List<Result> results = new List<Result>();
-
-        List<Opportunity> opps;
         Request req = requests.isEmpty() ? new Request() : requests[0];
 
         if (String.isNotBlank(req.opportunityId)) {
-            opps = [
+            List<Opportunity> opps = [
                 SELECT Id, Name, Amount, CloseDate, Probability,
                        Skill_Needed__c, Start_Needed__c, Target_Margin__c, Assumed_Level__c
                 FROM Opportunity
                 WHERE Id = :req.opportunityId
                 LIMIT 1
             ];
-        } else {
-            opps = [
-                SELECT Id, Name, Amount, CloseDate, Probability,
-                       Skill_Needed__c, Start_Needed__c, Target_Margin__c, Assumed_Level__c
-                FROM Opportunity
-                WHERE IsClosed = false
-                  AND Skill_Needed__c != null
-                  AND Start_Needed__c != null
-                ORDER BY CloseDate ASC
-                LIMIT 20
-            ];
+
+            List<Result> results = new List<Result>();
+            for (Opportunity opp : opps) {
+                results.add(evaluateOpportunity(opp));
+            }
+            return results;
         }
 
-        for (Opportunity opp : opps) {
-            results.add(evaluateOpportunity(opp));
+        // Bulk case (no opportunityId): the Agentforce Action platform only exposes
+        // singular scalar outputs, not lists, so every matching deal is evaluated
+        // individually and then folded into ONE combined Result the agent can narrate.
+        List<Opportunity> allOpps = [
+            SELECT Id, Name, Amount, CloseDate, Probability,
+                   Skill_Needed__c, Start_Needed__c, Target_Margin__c, Assumed_Level__c
+            FROM Opportunity
+            WHERE IsClosed = false
+              AND Skill_Needed__c != null
+              AND Start_Needed__c != null
+            ORDER BY CloseDate ASC
+            LIMIT 20
+        ];
+
+        if (allOpps.isEmpty()) {
+            return new List<Result>();
         }
 
-        return results;
+        List<Result> perDeal = new List<Result>();
+        for (Opportunity opp : allOpps) {
+            perDeal.add(evaluateOpportunity(opp));
+        }
+
+        return new List<Result>{ combineResults(perDeal) };
+    }
+
+    private static Result combineResults(List<Result> perDeal) {
+        Set<String> outcomeTypes = new Set<String>();
+        Boolean anyRequiresApproval = false;
+        List<String> paragraphs = new List<String>();
+
+        for (Result r : perDeal) {
+            outcomeTypes.add(r.outcomeType);
+            if (r.requiresApproval) {
+                anyRequiresApproval = true;
+            }
+            paragraphs.add(r.dealName + ': ' + r.outcomeType + ' — ' + r.summary);
+        }
+
+        Result combined = new Result();
+        combined.dealName = 'All Active Deals';
+        combined.outcomeType = outcomeTypes.size() == 1 ? new List<String>(outcomeTypes)[0] : 'Mixed';
+        combined.summary = String.join(paragraphs, '\n\n');
+        combined.recommendedConsultant = '';
+        combined.requiresApproval = anyRequiresApproval;
+        return combined;
     }
 
     private static Result evaluateOpportunity(Opportunity opp) {

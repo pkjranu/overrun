@@ -209,7 +209,8 @@ private class StaffingRiskServiceTest {
     }
 
     // ---- Bulk query: no opportunityId supplied should only pick up open,
-    //      near-term opportunities that actually need staffing ----
+    //      near-term opportunities that actually need staffing, and should
+    //      fold them into a single combined Result ----
     @isTest
     static void testBulkQuery_FiltersToOpenOpportunitiesNeedingStaffing() {
         Date today = Date.today();
@@ -242,7 +243,106 @@ private class StaffingRiskServiceTest {
         );
         Test.stopTest();
 
-        System.assertEquals(1, results.size(), 'Only the open opportunity with both Skill_Needed__c and Start_Needed__c set should be processed');
-        System.assertEquals(validOpp.Name, results[0].dealName);
+        System.assertEquals(1, results.size(), 'The bulk case should always fold into exactly one combined Result');
+        System.assertEquals('All Active Deals', results[0].dealName);
+        System.assert(results[0].summary.contains(validOpp.Name), 'Combined summary should mention the matching deal');
+        System.assert(!results[0].summary.contains(missingSkillOpp.Name), 'Combined summary should not mention a deal missing Skill_Needed__c');
+        System.assert(!results[0].summary.contains(closedOpp.Name), 'Combined summary should not mention an already-closed deal');
+    }
+
+    // ---- Bulk query: zero matching opportunities should return an empty list,
+    //      not a fabricated combined Result -- the agent narrates "no deals" off
+    //      an empty list, per the .agent instructions ----
+    @isTest
+    static void testBulkQuery_ZeroOpportunities_ReturnsEmptyList() {
+        // Deliberately no Opportunity records inserted at all.
+        Test.startTest();
+        List<StaffingRiskService.Result> results = StaffingRiskService.getStaffingRiskReport(
+            new List<StaffingRiskService.Request>()
+        );
+        Test.stopTest();
+
+        System.assertEquals(0, results.size(), 'Zero matching opportunities should produce an empty list, not a combined Result');
+    }
+
+    // ---- Bulk query: deals with different outcomes should combine into a
+    //      single 'Mixed' Result, requiring approval if any deal does, and
+    //      narrating each deal's own reasoning ----
+    @isTest
+    static void testBulkQuery_CombinesMixedOutcomesIntoOneResult() {
+        Date today = Date.today();
+
+        // Deal 1: Happy — consultant rolls off in time.
+        Consultant__c happyConsultant = createConsultant('Priya Rollout', 'Data Integration', 'Mid', 120);
+        Project__c happyProject = createProject('Legacy Migration', today.addDays(5));
+        createAssignment('Priya - Legacy Migration', happyConsultant.Id, happyProject.Id, 100, today.addDays(-30), today.addDays(5));
+        Opportunity happyOpp = createOpportunity(
+            'New Logo Alpha', 'Proposal/Price Quote', today.addDays(20),
+            'Data Integration', today.addDays(10), 'Mid', 30
+        );
+
+        // Deal 2: Risk — only match would be overallocated.
+        Consultant__c riskConsultant = createConsultant('Dana Busy', 'Data Cloud Integration Architect', 'Mid', 150);
+        Project__c riskProject = createProject('Ongoing Build', today.addDays(90));
+        createAssignment('Dana - Ongoing Build', riskConsultant.Id, riskProject.Id, 80, today.addDays(-10), today.addDays(90));
+        Opportunity riskOpp = createOpportunity(
+            'New Logo Gamma', 'Proposal/Price Quote', today.addDays(21),
+            'Data Cloud Integration Architect', today.addDays(10), 'Mid', 30
+        );
+
+        // Deal 3: Gap — no consultant has the required skill (no Cloud Migration
+        // consultant exists in this test's data).
+        Opportunity gapOpp = createOpportunity(
+            'New Logo Epsilon', 'Proposal/Price Quote', today.addDays(22),
+            'Cloud Migration', today.addDays(10), 'Mid', 30
+        );
+
+        Test.startTest();
+        List<StaffingRiskService.Result> results = StaffingRiskService.getStaffingRiskReport(
+            new List<StaffingRiskService.Request>()
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, results.size(), 'Three deals with mixed outcomes should still fold into one combined Result');
+        StaffingRiskService.Result combined = results[0];
+
+        System.assertEquals('All Active Deals', combined.dealName);
+        System.assertEquals('Mixed', combined.outcomeType, 'Different outcome types across deals should combine to Mixed');
+        System.assertEquals(true, combined.requiresApproval, 'Combined result must require approval if ANY deal does');
+        System.assertEquals('', combined.recommendedConsultant, 'Combined result should not name a single consultant');
+
+        System.assert(combined.summary.contains(happyOpp.Name) && combined.summary.contains('Happy'), 'Summary should narrate the Happy deal');
+        System.assert(combined.summary.contains(riskOpp.Name) && combined.summary.contains('Risk'), 'Summary should narrate the Risk deal');
+        System.assert(combined.summary.contains(gapOpp.Name) && combined.summary.contains('Gap'), 'Summary should narrate the Gap deal');
+    }
+
+    // ---- Bulk query: deals that all share the same outcome type should
+    //      combine to that shared outcome, not 'Mixed' ----
+    @isTest
+    static void testBulkQuery_SameOutcomeAcrossDeals_UsesSharedOutcome() {
+        Date today = Date.today();
+
+        // Two deals, neither with any consultant of the required skill -> both Gap.
+        // No Consultant__c records are inserted in this test at all.
+        Opportunity gapOpp1 = createOpportunity(
+            'New Logo Kappa', 'Proposal/Price Quote', today.addDays(20),
+            'Data Integration', today.addDays(10), 'Mid', 30
+        );
+        Opportunity gapOpp2 = createOpportunity(
+            'New Logo Lambda', 'Proposal/Price Quote', today.addDays(21),
+            'Cloud Migration', today.addDays(10), 'Mid', 30
+        );
+
+        Test.startTest();
+        List<StaffingRiskService.Result> results = StaffingRiskService.getStaffingRiskReport(
+            new List<StaffingRiskService.Request>()
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, results.size());
+        System.assertEquals('Gap', results[0].outcomeType, 'When every deal shares the same outcome, the combined outcome should not be Mixed');
+        System.assertEquals(false, results[0].requiresApproval, 'Gap-only outcomes should not require approval');
+        System.assert(results[0].summary.contains(gapOpp1.Name));
+        System.assert(results[0].summary.contains(gapOpp2.Name));
     }
 }
